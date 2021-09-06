@@ -1,0 +1,25 @@
+#cloud-config
+password: ubuntu
+chpasswd:
+  expire: false
+write_files:
+- content: |
+    network: {config: disabled}      
+  path: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+- content: |
+    network:
+      ethernets:
+        eth0:
+          dhcp4: no
+          addresses: [192.168.254.2/24]
+          gateway4: 192.168.254.1
+          nameservers:
+            addresses: [8.8.8.8, 8.8.4.4]
+      version: 2
+  path: /etc/netplan/51-netcfg.yaml
+  permission: '0600'
+runcmd:
+  - rm /etc/netplan/50-cloud-init.yaml
+  - netplan generate
+  - netplan apply
+  - sudo -u ubuntu sh -c 'echo "ssh-ed25519 _YOUR_SSH_PUBLIC_KEY_HERE_" > /home/ubuntu/.ssh/authorized_keys'
