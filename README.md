@@ -58,16 +58,38 @@ Expand-Archive -LiteralPath "${Env:USERPROFILE}\Downloads\create-hyperv-ubuntu-v
 展開したディレクトリに移動します。
 
 ```powershell
-cd create-hyperv-ubuntu-vm
+cd create-hyperv-ubuntu-vm-main
 ```
 
 ### 必要なファイル群のダウンロードと展開
 
-必要なファイル群をダウンロードと展開します。
-ダウンロードするファイルのバージョンや展開場所などを変更したい場合は `download-dependencies.ps1` の内容を適宜変更してください。
+このレポジトリの [Release v0.1.0 · hnakamur/create-hyperv-ubuntu-vm](https://github.com/hnakamur/create-hyperv-ubuntu-vm/releases/tag/v0.1.0) にある
+cloudinitiso.exe をダウンロードします。
 
 ```powershell
-.\download-dependencies.ps1
+Invoke-WebRequest -Uri "http://github.com/hnakamur/create-hyperv-ubuntu-vm/releases/download/v0.1.0/cloudinitiso.exe" -OutFile "cloudinitiso.exe"
+```
+
+https://cloudbase.it/downloads/ から qemu-img の Windows 版の zip ファイルをダウンロードします。
+
+```powershell
+Invoke-WebRequest -Uri "https://cloudbase.it/downloads/qemu-img-win-x64-2_3_0.zip" -OutFile "${Env:USERPROFILE}\Downloads\qemu-img-win-x64-2_3_0.zip"
+```
+
+ダウンロードした qemu-img の zip ファイルを `C:\qemu-img` に展開します。
+
+```powershell
+Expand-Archive -LiteralPath "${Env:USERPROFILE}\Downloads\qemu-img-win-x64-2_3_0.zip" -DestinationPath "C:\qemu-img"
+```
+
+Ubuntu 20.04 LTS サーバー版のイメージファイルをダウンロードします。
+サイズが大きくダウンロードに時間がかかるので [amazon ec2 - Powershell - Why is Using Invoke-WebRequest Much Slower Than a Browser Download? - Stack Overflow](https://stackoverflow.com/questions/28682642/powershell-why-is-using-invoke-webrequest-much-slower-than-a-browser-download) を参考に [$ProgressPreference](https://docs.microsoft.com/ja-jp/powershell/module/microsoft.powershell.core/about/about_preference_variables?view=powershell-7.1#progresspreference) の値を `SlientlyContinue` に変更してダウンロードしその後 `Continue` に戻します。
+あるいはブラウザ等で `C:\Users\自分のユーザー\Downloads` にダウンロードしてください。
+
+```
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -Uri "http://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img" -OutFile "${Env:USERPROFILE}\Downloads\ubuntu-20.04-server-cloudimg-amd64.img"
+$ProgressPreference = 'Continue'
 ```
 
 ## 仮想ネットワークインタフェースを作成
@@ -96,7 +118,7 @@ mk-winnat.ps1 ファイルを実行して Hyper-V の VM 用の仮想ネット�
 事前状態確認
 
 ```powershell
-Get-NetIPInterface | select InterfaceAlias,AddressFamily,ConnectionState,Forwarding | Where-Object {$_.InterfaceAlias -match "^vEthernet"} | Sort-Object -Property InterfaceAlias,AddressFamily | Format-Table 
+Get-NetIPInterface | select InterfaceAlias,AddressFamily,ConnectionState,Forwarding | Where-Object {$_.InterfaceAlias -match "^vEthernet"} | Sort-Object -Property InterfaceAlias,AddressFamily | Format-Table
 ```
 
 出力例
@@ -207,7 +229,17 @@ VMの名前を変更していた場合は `$VMName = "primary"` の箇所を適�
 .\delete-vm.ps1
 ```
 
-## 事後準備
+## WinNAT 仮想ネットワークインタフェースの削除
+
+```powershell
+Remove-NetNat -Name WinNAT
+```
+
+```powershell
+Remove-VMSwitch -SwitchName WinNAT
+```
+
+## 事後処理
 
 普段は PowerShell で未署名のスクリプトを使わないようであれば、管理者権限の PowerShell で以下のコマンドを実行してポリシーを `Restricted` に戻しておきます。
 
