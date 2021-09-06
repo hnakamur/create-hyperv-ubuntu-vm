@@ -52,7 +52,7 @@ Invoke-WebRequest "https://github.com/hnakamur/create-hyperv-ubuntu-vm/archive/r
 ダウンロードしたzipファイルを展開します。
 
 ```powershell
-Expand-Archive -LiteralPath "${Env:USERPROFILE}\Downloads\create-hyperv-ubuntu-vm.zip"
+Expand-Archive -LiteralPath "${Env:USERPROFILE}\Downloads\create-hyperv-ubuntu-vm.zip" -DestinationPath .
 ```
 
 展開したディレクトリに移動します。
