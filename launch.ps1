@@ -12,6 +12,7 @@ $vmPath = "${Env:Public}\Documents\Hyper-V\$VMName"
 $vhdx = "$($vmPath)\test.vhdx"
 $cloudInitIso = "$($vmPath)\metadata.iso"
 
+New-Item "$vmPath" -type directory -Force | Out-Null
 & .\cloudinitiso.exe -iso $cloudInitIso
 
 # Download qemu-img from http://www.cloudbase.it/qemu-img-windows/
